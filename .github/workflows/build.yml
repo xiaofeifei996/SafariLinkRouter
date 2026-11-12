@@ -10,15 +10,17 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Theos
+      - name: Toolchain
         run: |
+          brew install ldid dpkg 2>&1 | tail -5 || true
+          ls -l "$(command -v ldid || echo /opt/homebrew/bin/ldid)" || true
           git clone --depth 1 --recursive https://github.com/theos/theos.git "$HOME/theos"
           sudo rm -rf "$HOME/theos/sdks"
           git clone --depth 1 https://github.com/theos/sdks.git "$HOME/theos/sdks"
-          ls "$HOME/theos/sdks"
       - name: Build
         run: |
           export THEOS="$HOME/theos"
+          export PATH="/opt/homebrew/bin:$PATH"
           make clean || true
           set -o pipefail
           make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless 2>&1 | tail -60
@@ -34,15 +36,17 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Setup roothide Theos
+      - name: Toolchain
         run: |
+          brew install ldid dpkg 2>&1 | tail -5 || true
+          ls -l "$(command -v ldid || echo /opt/homebrew/bin/ldid)" || true
           git clone --depth 1 --recursive https://github.com/roothide/theos.git "$HOME/theos"
           sudo rm -rf "$HOME/theos/sdks"
           git clone --depth 1 https://github.com/theos/sdks.git "$HOME/theos/sdks"
-          ls "$HOME/theos/sdks"
       - name: Build
         run: |
           export THEOS="$HOME/theos"
+          export PATH="/opt/homebrew/bin:$PATH"
           make clean || true
           set -o pipefail
           make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=roothide 2>&1 | tail -60
