@@ -1,0 +1,9 @@
+Package: com.xiaofeifei.safarilinkrouter
+Name: SafariLinkRouter
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Description: 拦截 Safari 中无法打开的链接（magnet: 等），改为复制到剪贴板并跳转到指定 App，告别"网址无效"弹窗。
+Maintainer: xiaofeifei
+Author: xiaofeifei
+Section: Tweaks
+Depends: mobilesubstrate | ellekit
