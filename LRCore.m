@@ -559,4 +559,3 @@ NSString *LRUserScriptSource(void) {
     src = [src stringByReplacingOccurrencesOfString:@"__HANDLER__" withString:@"SLRHandler"];
     return src;
 }
-}
