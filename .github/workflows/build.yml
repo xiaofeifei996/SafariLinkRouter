@@ -1,0 +1,54 @@
+name: Build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  rootless:
+    name: rootless (Dopamine / palera1n)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Theos
+        run: |
+          git clone --depth 1 --recursive https://github.com/theos/theos.git "$HOME/theos"
+          sudo rm -rf "$HOME/theos/sdks"
+          git clone --depth 1 https://github.com/theos/sdks.git "$HOME/theos/sdks"
+          ls "$HOME/theos/sdks"
+      - name: Build
+        run: |
+          export THEOS="$HOME/theos"
+          make clean || true
+          set -o pipefail
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless 2>&1 | tail -60
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: rootless-deb
+          path: packages/*.deb
+          if-no-files-found: error
+
+  roothide:
+    name: roothide (RootHide)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup roothide Theos
+        run: |
+          git clone --depth 1 --recursive https://github.com/roothide/theos.git "$HOME/theos"
+          sudo rm -rf "$HOME/theos/sdks"
+          git clone --depth 1 https://github.com/theos/sdks.git "$HOME/theos/sdks"
+          ls "$HOME/theos/sdks"
+      - name: Build
+        run: |
+          export THEOS="$HOME/theos"
+          make clean || true
+          set -o pipefail
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=roothide 2>&1 | tail -60
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: roothide-deb
+          path: packages/*.deb
+          if-no-files-found: error
