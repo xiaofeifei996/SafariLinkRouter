@@ -468,11 +468,24 @@ static void LRShowSheet(NSURL *url) {
 
 static void LRHandleURLOnMain(NSURL *url) {
     NSString *scheme = url.scheme.lowercaseString ?: @"";
-    NSDictionary *rules = LRConfigDict()[@"rules"];
+    NSDictionary *cfg = LRConfigDict();
+    NSDictionary *rules = cfg[@"rules"];
     NSDictionary *rule = [rules isKindOfClass:[NSDictionary class]] ? rules[scheme] : nil;
     if (![rule isKindOfClass:[NSDictionary class]]) rule = [rules isKindOfClass:[NSDictionary class]] ? rules[@"*"] : nil;
     if ([rule isKindOfClass:[NSDictionary class]]) {
         LRPerformAction(rule[@"action"], rule[@"bundleID"], rule[@"template"], url);
+        return;
+    }
+    NSArray *list = cfg[@"schemes"];
+    BOOL explicitScheme = [list isKindOfClass:[NSArray class]] && [list containsObject:scheme];
+    id ws = LRWorkspace();
+    BOOL lsAvailable = ws && [ws respondsToSelector:@selector(applicationsAvailableForOpeningURL:)];
+    if (!lsAvailable && !explicitScheme) {
+        LROpenURL(url);
+        return;
+    }
+    if (!explicitScheme && LRAppsForURL(url).count > 0) {
+        LROpenURL(url);
         return;
     }
     LRShowSheet(url);
@@ -514,7 +527,11 @@ BOOL LRShouldInterceptURL(NSURL *url) {
     if ([LRWhitelistedSchemes() containsObject:scheme]) return NO;
     NSArray *list = cfg[@"schemes"];
     if ([list containsObject:scheme] || [list containsObject:@"*"]) return YES;
-    if ([cfg[@"interceptUnknown"] boolValue] && LRAppsForURL(url).count == 0) return YES;
+    if ([cfg[@"interceptUnknown"] boolValue]) {
+        id ws = LRWorkspace();
+        BOOL lsAvailable = ws && [ws respondsToSelector:@selector(applicationsAvailableForOpeningURL:)];
+        if (lsAvailable && LRAppsForURL(url).count == 0) return YES;
+    }
     return NO;
 }
 
@@ -523,7 +540,7 @@ BOOL LRShouldInterceptURL(NSURL *url) {
 static NSString *const kLRUserScriptTemplate = @"(function(){\n"
 "  if (window.__slrInstalled) return; window.__slrInstalled = true;\n"
 "  var TARGET = __SCHEMES__;\n"
-"  var WL = ['http','https','file','about','data','blob','javascript','ws','wss','tel','mailto','sms','facetime','facetime-audio','maps','itms','itms-apps','itms-services','app-settings','shortcuts','x-apple','safari','ftp'];\n"
+"  var WL = ['http','https','file','about','data','blob','javascript','ws','wss','tel','mailto','sms','facetime','facetime-audio','maps','itms','itms-apps','itms-services','app-settings','shortcuts','x-apple','safari'];\n"
 "  function schemeOf(u){ var m = /^([a-zA-Z][a-zA-Z0-9+.\\-]*):/.exec(u || ''); return m ? m[1].toLowerCase() : ''; }\n"
 "  function should(u){ var s = schemeOf(u); if (!s) return false;\n"
 "    if (WL.indexOf(s) >= 0) return false;\n"
